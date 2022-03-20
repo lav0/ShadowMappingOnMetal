@@ -6,8 +6,9 @@
 //
 
 #import <Cocoa/Cocoa.h>
+#import "EventHandlerMetalView.h"
 
-@interface ViewController : NSViewController
+@interface ViewController : NSViewController<KeyboardArrowPressedDelegate>
 
 
 @end

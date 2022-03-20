@@ -11,8 +11,6 @@
 
 @implementation ViewController
 {
-    MTKView *_view;
-
     Renderer *_renderer;
     Geo* _geo;
     Geo* _ge1;
@@ -24,24 +22,25 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
 
-    _view = (MTKView *)self.view;
+    EventHandlerMetalView* view = (EventHandlerMetalView *)self.view;
     
-    _view.device = MTLCreateSystemDefaultDevice();
+    view.device = MTLCreateSystemDefaultDevice();
     
-    NSAssert(_view.device, @"Metal is not supported on this device");
+    NSAssert(view.device, @"Metal is not supported on this device");
     
-    _renderer = [[Renderer alloc] initWithMetalKitView:_view];
+    _renderer = [[Renderer alloc] initWithMetalKitView:view];
     
     NSAssert(_renderer, @"Renderer failed initialization");
     
     _geo = [GeoFactory makeTriangleAt:(vector_float4){-1.3, 0, 0, 1}];
     _ge1 = [GeoFactory makeTriangleAt:(vector_float4){1.3, 0, 0, 1}];
     
-    [_renderer mtkView:_view drawableSizeWillChange:_view.drawableSize];
+    [_renderer mtkView:view drawableSizeWillChange:view.drawableSize];
     [_renderer addGeo: _ge1];
     [_renderer addGeo: _geo];
     
-    _view.delegate = _renderer;
+    view.delegate = _renderer;
+    view.keyArrowDelegate = self;
     
     _angle = 0.f;
     _timer = [NSTimer scheduledTimerWithTimeInterval: 0.02
@@ -68,6 +67,17 @@
     
     _geo.transform = m;
 }
-
+-(void)leftPressed {
+    [_renderer.camera revolveAround:(vector_float3){0, 1, 0} by:0.05];
+}
+-(void)rightPressed {
+    [_renderer.camera revolveAround:(vector_float3){0, 1, 0} by:-0.05];
+}
+-(void)topPressed {
+    [_renderer.camera moveAlongLookBy:-0.5];
+}
+-(void)downPressed {
+    [_renderer.camera moveAlongLookBy:0.5];
+}
 
 @end

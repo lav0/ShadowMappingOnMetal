@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		55E7653527E6DE1B00343422 /* EventHandlerMetalView.m in Sources */ = {isa = PBXBuildFile; fileRef = 55E7653427E6DE1B00343422 /* EventHandlerMetalView.m */; };
 		55F51D1727E6096300288471 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 55F51D1627E6096300288471 /* AppDelegate.m */; };
 		55F51D1A27E6096300288471 /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 55F51D1927E6096300288471 /* ViewController.m */; };
 		55F51D1C27E6096400288471 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 55F51D1B27E6096400288471 /* Assets.xcassets */; };
@@ -20,6 +21,8 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		55E7653327E6DE1B00343422 /* EventHandlerMetalView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = EventHandlerMetalView.h; sourceTree = "<group>"; };
+		55E7653427E6DE1B00343422 /* EventHandlerMetalView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = EventHandlerMetalView.m; sourceTree = "<group>"; };
 		55F51D1227E6096300288471 /* ShadowMappingOnMetal.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ShadowMappingOnMetal.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		55F51D1527E6096300288471 /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
 		55F51D1627E6096300288471 /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
@@ -82,6 +85,8 @@
 				55F51D1627E6096300288471 /* AppDelegate.m */,
 				55F51D1827E6096300288471 /* ViewController.h */,
 				55F51D1927E6096300288471 /* ViewController.m */,
+				55E7653327E6DE1B00343422 /* EventHandlerMetalView.h */,
+				55E7653427E6DE1B00343422 /* EventHandlerMetalView.m */,
 				55F51D1B27E6096400288471 /* Assets.xcassets */,
 				55F51D1D27E6096400288471 /* Main.storyboard */,
 				55F51D2027E6096400288471 /* main.m */,
@@ -167,6 +172,7 @@
 				55F51D2A27E60B4D00288471 /* Renderer.m in Sources */,
 				55F51D2D27E60CA800288471 /* shaders.metal in Sources */,
 				55F51D3927E620FD00288471 /* GeoFactory.m in Sources */,
+				55E7653527E6DE1B00343422 /* EventHandlerMetalView.m in Sources */,
 				55F51D1A27E6096300288471 /* ViewController.m in Sources */,
 				55F51D2127E6096400288471 /* main.m in Sources */,
 				55F51D1727E6096300288471 /* AppDelegate.m in Sources */,

@@ -8,7 +8,6 @@
 @import simd;
 
 #import "Renderer.h"
-#import "MeshCamera.h"
 #import "ShaderTypes.h"
 #import "Helpers.h"
 #import "Geo.h"
@@ -28,7 +27,6 @@
     // The current size of the view, used as an input to the vertex shader.
     vector_uint2 _viewportSize;
     
-    MeshCamera* _camera;
     matrix_float4x4 _projection;
     
     NSMutableArray< Geo* >* _nodes;
@@ -114,6 +112,8 @@
 
     if(renderPassDescriptor != nil)
     {
+        renderPassDescriptor.colorAttachments[0].clearColor = MTLClearColorMake(0.63, 0.81, 1.0, 1.0);
+        
         // Create a render command encoder.
         id<MTLRenderCommandEncoder> renderEncoder =
         [commandBuffer renderCommandEncoderWithDescriptor:renderPassDescriptor];

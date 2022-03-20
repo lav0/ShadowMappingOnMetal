@@ -11,11 +11,6 @@
 
 @implementation MeshCamera
 {
-    vector_float3 _position;
-    vector_float3 _lookDirection;
-    
-    float _angle_y;
-    float _angle_xy;
 }
 -(instancetype)init
 {
@@ -39,6 +34,14 @@
     _transform.columns[3].x = r.x;
     _transform.columns[3].y = r.y;
     _transform.columns[3].z = r.z;
+}
+-(void)moveAlongLookBy:(float)units
+{
+    vector_float3 look = (vector_float3){_transform.columns[2].x,
+                                         _transform.columns[2].y,
+                                         _transform.columns[2].z
+                                        };
+    [self moveAlong:look by:units];
 }
 
 @end

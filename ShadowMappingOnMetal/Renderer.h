@@ -9,10 +9,13 @@
 @import MetalKit;
 
 #import "Geo.h"
+#import "MeshCamera.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
 @interface Renderer : NSObject<MTKViewDelegate>
+
+@property (strong, nonatomic) MeshCamera* camera;
 
 - (nonnull instancetype)initWithMetalKitView:(nonnull MTKView *)mtkView;
 - (void)addGeo:(Geo*)node;
