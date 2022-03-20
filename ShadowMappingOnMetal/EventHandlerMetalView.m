@@ -14,8 +14,6 @@
 }
 -(void)keyDown:(NSEvent *)event
 {
-    NSLog(@"%hu",event.keyCode);
-
     if (self.keyArrowDelegate) {
         if (event.keyCode == 123)
             [self.keyArrowDelegate leftPressed];

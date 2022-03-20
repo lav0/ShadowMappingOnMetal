@@ -18,6 +18,8 @@ NS_ASSUME_NONNULL_BEGIN
 -(instancetype)initWith:(const Vertex*)data sized:(uint32_t)size;
 -(const Vertex*) data;
 
+-(void)scaleBy:(float)factor;
+
 @end
 
 NS_ASSUME_NONNULL_END

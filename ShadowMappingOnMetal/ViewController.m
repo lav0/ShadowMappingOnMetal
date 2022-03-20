@@ -32,8 +32,9 @@
     
     NSAssert(_renderer, @"Renderer failed initialization");
     
-    _geo = [GeoFactory makeTriangleAt:(vector_float4){-1.3, 0, 0, 1}];
-    _ge1 = [GeoFactory makeTriangleAt:(vector_float4){1.3, 0, 0, 1}];
+    _geo = [GeoFactory makeTriangleAt:(vector_float4){0, 0, 0, 1}];
+    _ge1 = [GeoFactory makeRectangleAt:(vector_float4){-1, -1, -1, 1}];
+    [_ge1 scaleBy:2.0];
     
     [_renderer mtkView:view drawableSizeWillChange:view.drawableSize];
     [_renderer addGeo: _ge1];

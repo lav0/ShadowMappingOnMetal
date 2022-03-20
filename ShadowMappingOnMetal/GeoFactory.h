@@ -12,6 +12,7 @@
 @interface GeoFactory : NSObject
 
 +(Geo*) makeTriangleAt:(vector_float4)position;
++(Geo*) makeRectangleAt:(vector_float4)position;
 
 @end
 

@@ -29,5 +29,29 @@
     return geo;
 }
 
++(Geo*) makeRectangleAt:(vector_float4)position
+{
+    const vector_float4 grey = (vector_float4){ 0.5, 0.5, 0.5, 1 };
+    const Vertex triangleVertices[] =
+    {
+        { {  0, 0, 0, 1 }, {0, 0, 1, 0}, grey },
+        { {  1, 0, 0, 1 }, {0, 0, 1, 0}, grey },
+        { {  1, 1, 0, 1 }, {0, 0, 1, 0}, grey },
+        
+        { {  0, 0, 0, 1 }, {0, 0, 1, 0}, grey },
+        { {  1, 1, 0, 1 }, {0, 0, 1, 0}, grey },
+        { {  0, 1, 0, 1 }, {0, 0, 1, 0}, grey },
+    };
+    
+    Geo* geo = [[Geo alloc] initWith:triangleVertices sized: 6];
+    
+    matrix_float4x4 m = matrix_identity_float4x4;
+    m.columns[3] = position;
+    
+    geo.transform = m;
+    
+    return geo;
+}
+
 
 @end

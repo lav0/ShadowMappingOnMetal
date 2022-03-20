@@ -40,4 +40,17 @@
     return (const Vertex*)[_vertices mutableBytes];
 }
 
+-(void)scaleBy:(float)factor {
+    if (fabs(factor) < 1e-4)
+        return;
+    
+    matrix_float4x4 m = self.transform;
+    matrix_float4x4 s = matrix_identity_float4x4;
+    s.columns[0].x = factor;
+    s.columns[1].y = factor;
+    s.columns[2].z = factor;
+    
+    self.transform = simd_mul(m, s);
+}
+
 @end
