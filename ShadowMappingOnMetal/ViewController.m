@@ -25,6 +25,7 @@
     EventHandlerMetalView* view = (EventHandlerMetalView *)self.view;
     
     view.device = MTLCreateSystemDefaultDevice();
+    view.depthStencilPixelFormat = MTLPixelFormatDepth32Float;
     
     NSAssert(view.device, @"Metal is not supported on this device");
     

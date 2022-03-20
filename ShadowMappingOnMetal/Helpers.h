@@ -22,4 +22,5 @@ matrix_float4x4 matrix_perspective_right_hand(float fovyRadians, float aspect, f
     }};
 }
 
+
 #endif /* Helpers_h */

@@ -29,8 +29,8 @@ vertexShader(constant Vertex *vertices                  [[buffer(IndexVertices)]
     PositionOut out;
     matrix_float4x4 projViewMat = transforms->projection * transforms->view;
     out.position = projViewMat * modelMat * vertices[vid].position;
-    out.normal = projViewMat * modelMat * vertices[vid].normal;
-//    out.light = lightVec;
+    out.normal = modelMat * vertices[vid].normal;
+    out.light = transforms->light_ray;
     out.color = vertices[vid].color;
     
     return out;
@@ -38,7 +38,15 @@ vertexShader(constant Vertex *vertices                  [[buffer(IndexVertices)]
 
 fragment float4 fragmentShader(PositionOut in [[stage_in]])
 {
-    // Return the interpolated color.
-    return in.color;
+    float4 ambient = in.color;
+    float4 diffuse = in.color;
+//    float3 sightVector = (float4(0, 0, -1, 0)).xyz;
+    
+    float3 N = normalize(in.normal.xyz);
+    float3 L = -normalize(in.light.xyz);
+    
+    float diffuseFactor = fmax(0.f, dot(N, L));
+    
+    return ambient + diffuseFactor * diffuse;
 }
 

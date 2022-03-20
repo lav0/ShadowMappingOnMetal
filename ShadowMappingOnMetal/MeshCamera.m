@@ -8,40 +8,46 @@
 #import <simd/simd.h>
 #import "MeshCamera.h"
 
+#import <MetalKit/MetalKit.h>
 
 @implementation MeshCamera
 {
+    vector_float3 _look;
 }
 -(instancetype)init
 {
     if (self = [super init]) {
         _transform = matrix_identity_float4x4;
+        _look = (vector_float3){0, 0, -1};
     }
     return self;
 }
 -(void)revolveAround:(vector_float3)axis by:(float)angle
 {
-    matrix_float4x4 turn = simd_matrix4x4( simd_quaternion(angle, axis) );
+    simd_quatf turn = simd_quaternion(angle, axis);
         
-    _transform = simd_mul( _transform, turn );
+    _transform = simd_mul(_transform,
+                          simd_matrix4x4( turn ));
+    
+    _look      = simd_act(turn,
+                          _look);
 }
 -(void)moveAlong:(vector_float3)axis by:(float)units
 {
-    vector_float3 c = _transform.columns[3].xyz;
+    vector_float3 r = axis * units;
     
-    vector_float3 r = c + axis * units;
+    matrix_float4x4 m = _transform;
+    matrix_float4x4 t = matrix_identity_float4x4;
+    t.columns[3].x = r.x;
+    t.columns[3].y = r.y;
+    t.columns[3].z = r.z;
     
-    _transform.columns[3].x = r.x;
-    _transform.columns[3].y = r.y;
-    _transform.columns[3].z = r.z;
+    _transform = simd_mul(t, m);
 }
 -(void)moveAlongLookBy:(float)units
 {
-    vector_float3 look = (vector_float3){_transform.columns[2].x,
-                                         _transform.columns[2].y,
-                                         _transform.columns[2].z
-                                        };
-    [self moveAlong:look by:units];
+    [self moveAlong:_look by:units];
 }
+
 
 @end

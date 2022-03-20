@@ -17,14 +17,12 @@
     id<MTLDevice> _device;
     
     id<MTLBuffer> _uniforms;
+    id<MTLTexture> _depthTex;
     
-    // The render pipeline generated from the vertex and fragment shaders in the .metal shader file.
     id<MTLRenderPipelineState> _pipelineState;
-
-    // The command queue used to pass commands to the device.
+    id<MTLDepthStencilState> _depthState;
     id<MTLCommandQueue> _commandQueue;
 
-    // The current size of the view, used as an input to the vertex shader.
     vector_uint2 _viewportSize;
     
     matrix_float4x4 _projection;
@@ -53,10 +51,27 @@
         pipelineStateDescriptor.vertexFunction = vertexFunction;
         pipelineStateDescriptor.fragmentFunction = fragmentFunction;
         pipelineStateDescriptor.colorAttachments[0].pixelFormat = mtkView.colorPixelFormat;
+        pipelineStateDescriptor.depthAttachmentPixelFormat = mtkView.depthStencilPixelFormat;
 
         _pipelineState = [_device newRenderPipelineStateWithDescriptor:pipelineStateDescriptor
                                                                  error:&error];
+
+        MTLDepthStencilDescriptor *depthStateDesc = [[MTLDepthStencilDescriptor alloc] init];
+        depthStateDesc.depthCompareFunction = MTLCompareFunctionLessEqual;
+        depthStateDesc.depthWriteEnabled = YES;
+        _depthState = [_device newDepthStencilStateWithDescriptor:depthStateDesc];
+
+        MTLTextureDescriptor* depthTextureDesc = [MTLTextureDescriptor texture2DDescriptorWithPixelFormat: MTLPixelFormatDepth16Unorm
+                                                                                                    width: mtkView.frame.size.width
+                                                                                                   height: mtkView.frame.size.height
+                                                                                                mipmapped: NO];
         
+        depthTextureDesc.textureType = MTLTextureType2D;
+        depthTextureDesc.sampleCount = 1;
+        depthTextureDesc.storageMode = MTLStorageModePrivate;
+        depthTextureDesc.usage = MTLTextureUsageRenderTarget;
+        
+        _depthTex = [_device newTextureWithDescriptor:depthTextureDesc];
         _uniforms = [_device newBufferWithLength:sizeof(Uniforms) options:MTLResourceStorageModeShared];
                 
         // Pipeline State creation could fail if the pipeline descriptor isn't set up properly.
@@ -113,16 +128,18 @@
     if(renderPassDescriptor != nil)
     {
         renderPassDescriptor.colorAttachments[0].clearColor = MTLClearColorMake(0.63, 0.81, 1.0, 1.0);
+//        renderPassDescriptor.depthAttachment.texture = _depthTex;
         
         // Create a render command encoder.
         id<MTLRenderCommandEncoder> renderEncoder =
-        [commandBuffer renderCommandEncoderWithDescriptor:renderPassDescriptor];
+            [commandBuffer renderCommandEncoderWithDescriptor:renderPassDescriptor];
         renderEncoder.label = @"MyRenderEncoder";
 
         // Set the region of the drawable to draw into.
         [renderEncoder setViewport:(MTLViewport){0.0, 0.0, _viewportSize.x, _viewportSize.y, 0.0, 1.0 }];
         
         [renderEncoder setRenderPipelineState:_pipelineState];
+        [renderEncoder setDepthStencilState:_depthState];
         [renderEncoder setVertexBuffer:_uniforms offset:0 atIndex:IndexUniforms];
         
         for (Geo* geometry in _nodes)
