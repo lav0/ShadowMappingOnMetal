@@ -22,5 +22,18 @@ matrix_float4x4 matrix_perspective_right_hand(float fovyRadians, float aspect, f
     }};
 }
 
+matrix_float4x4 matrix_orthogonal_right_hand(float aspect, float nearZ, float farZ) {
+    float ys = 1.f;
+    float xs = ys / aspect;
+    float zs = farZ / (nearZ - farZ);
+
+    return (matrix_float4x4) {{
+            {xs, 0, 0, 0},
+            {0, ys, 0, 0},
+            {0, 0, zs, -1},
+            {0, 0, nearZ * zs, 0}
+    }};
+}
+
 
 #endif /* Helpers_h */

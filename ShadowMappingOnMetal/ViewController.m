@@ -14,6 +14,7 @@
     Renderer *_renderer;
     Geo* _geo;
     Geo* _ge1;
+    Geo* _ge2;
     
     float _angle;
     NSTimer* _timer;
@@ -26,6 +27,7 @@
     
     view.device = MTLCreateSystemDefaultDevice();
     view.depthStencilPixelFormat = MTLPixelFormatDepth32Float;
+    view.clearColor = MTLClearColorMake(0.63, 0.81, 1.0, 1.0);
     
     NSAssert(view.device, @"Metal is not supported on this device");
     
@@ -33,11 +35,14 @@
     
     NSAssert(_renderer, @"Renderer failed initialization");
     
-    _geo = [GeoFactory makeTriangleAt:(vector_float4){0, 0, 0, 1}];
-    _ge1 = [GeoFactory makeRectangleAt:(vector_float4){-1, -1, -1, 1}];
+    _geo = [GeoFactory makeTriangleAt:(vector_float4){0, 0, -0.9, 1}];
+    _ge1 = [GeoFactory makeRectangleAt:(vector_float4){-1, -1, -2, 1}];
+    _ge2 = [GeoFactory makeRectangleAt:(vector_float4){-10, -10, -10, 1}];
     [_ge1 scaleBy:2.0];
+    [_ge2 scaleBy:20.0];
     
     [_renderer mtkView:view drawableSizeWillChange:view.drawableSize];
+    [_renderer addGeo: _ge2];
     [_renderer addGeo: _ge1];
     [_renderer addGeo: _geo];
     

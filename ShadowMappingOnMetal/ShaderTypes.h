@@ -11,13 +11,19 @@
 
 #include <simd/simd.h>
 
-typedef enum VertexInputIndex
+typedef enum
 {
     IndexVertices     = 0,
     IndexViewportSize = 1,
     IndexUniforms     = 2,
     IndexModelMat     = 3
 } VertexInputIndex;
+
+typedef enum
+{
+    FII_IndexDepthTexture = 0,
+    FII_IndexColorTexture = 1
+} FragmentInputIndex;
 
 typedef struct
 {
@@ -32,5 +38,11 @@ typedef struct
     vector_float4 normal;
     vector_float4 color;
 } Vertex;
+
+typedef struct
+{
+    vector_float4 position;
+    vector_float2 uv_coords;
+} TextureVertex;
 
 #endif /* ShaderTypes_h */
