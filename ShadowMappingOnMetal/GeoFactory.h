@@ -11,8 +11,8 @@
 
 @interface GeoFactory : NSObject
 
-+(Geo*) makeTriangleAt:(vector_float4)position;
-+(Geo*) makeRectangleAt:(vector_float4)position;
++(Geo*) makeColoredTriangleAt:(vector_float4)position;
++(Geo*) makeRectangleAt:(vector_float4)position color:(vector_float4)color;
 
 @end
 

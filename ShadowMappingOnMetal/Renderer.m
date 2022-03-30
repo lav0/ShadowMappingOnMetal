@@ -32,7 +32,6 @@
     
     matrix_float4x4 _projection;
     matrix_float4x4 _shadowProjection;
-    MeshCamera*     _shadowCamera;
     
     NSMutableArray< Geo* >* _nodes;
 }
@@ -127,7 +126,7 @@
         [_camera moveAlong:(vector_float3){0, 0, -1} by:2.f];
         
         _shadowCamera = [[MeshCamera alloc] init];
-        [_shadowCamera moveAlong:(vector_float3){0, 0, -1} by:1.f];
+        [_shadowCamera moveAlong:(vector_float3){0, 0, -1} by:2.f];
         
         _nodes = [[NSMutableArray alloc] init];
         
@@ -211,6 +210,7 @@
         [renderEncoder setDepthStencilState:_depthState];
         [renderEncoder setFragmentTexture:_depthTex atIndex:FII_IndexDepthTexture];
         [renderEncoder setVertexBuffer:_uniforms offset:0 atIndex:IndexUniforms];
+        [renderEncoder setVertexBuffer:_shadowUniforms offset:0 atIndex:IndexShadows];
 
         for (Geo* geometry in _nodes)
         {

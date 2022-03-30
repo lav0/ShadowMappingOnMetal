@@ -10,7 +10,7 @@
 
 @implementation GeoFactory
 
-+(Geo*) makeTriangleAt:(vector_float4)position
++(Geo*) makeColoredTriangleAt:(vector_float4)position
 {
     const Vertex triangleVertices[] =
     {
@@ -29,18 +29,17 @@
     return geo;
 }
 
-+(Geo*) makeRectangleAt:(vector_float4)position
++(Geo*) makeRectangleAt:(vector_float4)position color:(vector_float4)color
 {
-    const vector_float4 grey = (vector_float4){ 0.5, 0.5, 0.5, 1 };
     const Vertex triangleVertices[] =
     {
-        { {  0, 0, 0, 1 }, {0, 0, 1, 0}, grey },
-        { {  1, 0, 0, 1 }, {0, 0, 1, 0}, grey },
-        { {  1, 1, 0, 1 }, {0, 0, 1, 0}, grey },
+        { {  0, 0, 0, 1 }, {0, 0, 1, 0}, color },
+        { {  1, 0, 0, 1 }, {0, 0, 1, 0}, color },
+        { {  1, 1, 0, 1 }, {0, 0, 1, 0}, color },
         
-        { {  0, 0, 0, 1 }, {0, 0, 1, 0}, grey },
-        { {  1, 1, 0, 1 }, {0, 0, 1, 0}, grey },
-        { {  0, 1, 0, 1 }, {0, 0, 1, 0}, grey },
+        { {  0, 0, 0, 1 }, {0, 0, 1, 0}, color },
+        { {  1, 1, 0, 1 }, {0, 0, 1, 0}, color },
+        { {  0, 1, 0, 1 }, {0, 0, 1, 0}, color },
     };
     
     Geo* geo = [[Geo alloc] initWith:triangleVertices sized: 6];

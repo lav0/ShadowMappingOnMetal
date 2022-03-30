@@ -26,6 +26,9 @@
         else
         if (event.keyCode == 126)
             [self.keyArrowDelegate topPressed];
+        else
+        if (event.keyCode == 49)
+            [self.keyArrowDelegate triggerRevolving];
     }
 }
 

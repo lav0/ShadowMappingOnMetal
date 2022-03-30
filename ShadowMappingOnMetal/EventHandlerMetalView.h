@@ -15,6 +15,7 @@ NS_ASSUME_NONNULL_BEGIN
 -(void)rightPressed;
 -(void)topPressed;
 -(void)downPressed;
+-(void)triggerRevolving;
 @end
 
 @interface EventHandlerMetalView : MTKView

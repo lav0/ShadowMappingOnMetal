@@ -31,13 +31,14 @@ DepthFragmentOut;
 vertex PositionOut
 vertexShader(constant Vertex *vertices                  [[ buffer(IndexVertices) ]],
              constant Uniforms *transforms              [[ buffer(IndexUniforms) ]],
+             constant Uniforms *shadows                 [[ buffer(IndexShadows)  ]],
              const device float4x4& modelMat            [[ buffer(IndexModelMat) ]],
              uint vid                                   [[ vertex_id ]])
 {
     PositionOut out;
     matrix_float4x4 projViewMat = transforms->projection * transforms->view;
     out.positionW = projViewMat * modelMat * vertices[vid].position;
-    out.positionM = transforms->projection * modelMat * vertices[vid].position;
+    out.positionM = shadows->projection * shadows->view * modelMat * vertices[vid].position;
     out.normal = modelMat * vertices[vid].normal;
     out.light = transforms->light_ray;
     out.color = vertices[vid].color;
@@ -67,7 +68,7 @@ fragment float4 fragmentTextureShader(PositionOut in [[ stage_in ]],
     float3 L = -normalize(in.light.xyz);
 
     float t = (in.positionM.z / in.positionM.w);
-    float diffuseFactor = d < t-0.0001 ? 0 : fmax(0.f, dot(N, L));
+    float diffuseFactor = d < t-0.00001 ? 0 : fmax(0.f, dot(N, L));
     
     return ambient + diffuseFactor * diffuse;
 }
@@ -89,5 +90,5 @@ vertex PositionOut vertexDepth(constant Vertex *vertices                  [[ buf
 
 fragment float fragmentDepthShader(PositionOut in [[ stage_in ]])
 {
-    return in.positionM.z;
+    return in.positionM.z;// / in.positionM.w;
 }

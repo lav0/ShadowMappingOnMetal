@@ -16,7 +16,8 @@ typedef enum
     IndexVertices     = 0,
     IndexViewportSize = 1,
     IndexUniforms     = 2,
-    IndexModelMat     = 3
+    IndexShadows      = 3,
+    IndexModelMat     = 4
 } VertexInputIndex;
 
 typedef enum
