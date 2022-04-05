@@ -90,5 +90,5 @@ vertex PositionOut vertexDepth(constant Vertex *vertices                  [[ buf
 
 fragment float fragmentDepthShader(PositionOut in [[ stage_in ]])
 {
-    return in.positionM.z;// / in.positionM.w;
+    return in.positionM.z;
 }
