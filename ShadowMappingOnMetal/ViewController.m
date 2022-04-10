@@ -46,30 +46,33 @@ static float _RAD_OFFSET = 1.0f;
     const vector_float4 blueish = (vector_float4){ 0.5, 0.53, 0.7, 1 };
     
     _geo = [GeoFactory makeColoredTriangleAt:(vector_float4){0, 0, -0.9, 1}];
-    _ge1 = [GeoFactory makeRectangleAt:(vector_float4){-1, -1, -2.8078, 1} color:blueish];
+    _ge1 = [GeoFactory makeCubeAt:(vector_float4){0, 0, -2, 1} color:grey];
     _ge2 = [GeoFactory makeRectangleAt:(vector_float4){-10, -10, -10, 1} color:grey];
-    [_ge1 scaleBy:2.0];
+    
     [_ge2 scaleBy:20.0];
     
     [_renderer mtkView:view drawableSizeWillChange:view.drawableSize];
     [_renderer addGeo: _ge2];
     [_renderer addGeo: _ge1];
-    [_renderer addGeo: _geo];
+//    [_renderer addGeo: _geo];
     
     view.delegate = _renderer;
     view.keyArrowDelegate = self;
     
     _revolving = NO;
-    _triagAngle = M_PI / 3;
+    _triagAngle = 3.82719493; // M_PI / 3;
     _cameraAngle = 0.f;
     _timer = [NSTimer scheduledTimerWithTimeInterval: 0.02
                                               target: self
                                               selector:@selector(onTick:)
                                               userInfo: nil repeats:YES];
     
-    float cam_x = _RAD_OFFSET * sin(_cameraAngle);
-    float cam_y = _RAD_OFFSET * cos(_cameraAngle);
-    [_renderer.shadowCamera moveAlong:(vector_float3){cam_x, -cam_y, 0} by: 1.0f];
+//    float cam_x = _RAD_OFFSET * sin(_cameraAngle);
+//    float cam_y = _RAD_OFFSET * cos(_cameraAngle);
+//    [_renderer.shadowCamera moveAlong:(vector_float3){cam_x, -cam_y, 0} by: 1.0f];
+    
+    matrix_float4x4 rot_mat = [Geo matrix4x4_rotation:M_PI_2*0.95 around:(vector_float3){0, 1, 0}];
+    _ge1.transform = simd_mul(_ge1.transform, rot_mat);
 }
 
 
@@ -82,17 +85,10 @@ static float _RAD_OFFSET = 1.0f;
     if (_revolving)
     {
         _triagAngle += 0.01;
+        
+        matrix_float4x4 rot_mat = [Geo matrix4x4_rotation:0.01 around:(vector_float3){0, 1, 0}];
+        _ge1.transform = simd_mul(_ge1.transform, rot_mat);
     }
-    
-    float sn = sin(_triagAngle);
-    float cs = cos(_triagAngle);
-    
-    matrix_float4x4 m = _geo.transform;
-    m.columns[0].x = cs; m.columns[1].x = -sn;
-    m.columns[0].y = sn; m.columns[1].y = cs;
-    
-    _geo.transform = m;
-
     
     _cameraAngle += _CAM_ANGLE_INCREMENT;
     

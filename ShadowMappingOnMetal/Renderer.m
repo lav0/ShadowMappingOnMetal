@@ -9,8 +9,9 @@
 
 #import "Renderer.h"
 #import "ShaderTypes.h"
-#import "Helpers.h"
 #import "Geo.h"
+#include "Helpers.h"
+
 
 @implementation Renderer
 {
@@ -110,8 +111,8 @@
         _shadowPassDescriptor.depthAttachment.storeAction = MTLStoreActionStore;
         _shadowPassDescriptor.depthAttachment.clearDepth = 1.0;
 
-        _uniforms = [_device newBufferWithLength:sizeof(Uniforms) options:MTLResourceStorageModeShared];
-        _shadowUniforms = [_device newBufferWithLength:sizeof(Uniforms) options:MTLResourceStorageModeShared];
+        _uniforms = [_device newBufferWithLength:sizeof(ModelUniforms) options:MTLResourceStorageModeShared];
+        _shadowUniforms = [_device newBufferWithLength:sizeof(ShadowUniforms) options:MTLResourceStorageModeShared];
                 
         // Pipeline State creation could fail if the pipeline descriptor isn't set up properly.
         //  If the Metal API validation is enabled, you can find out more information about what
@@ -122,17 +123,22 @@
         // Create the command queue
         _commandQueue = [_device newCommandQueue];
         
-        _camera = [[MeshCamera alloc] init];
-        [_camera moveAlong:(vector_float3){0, 0, -1} by:2.f];
-        
-        _shadowCamera = [[MeshCamera alloc] init];
-        [_shadowCamera moveAlong:(vector_float3){0, 0, -1} by:2.f];
-        
         _nodes = [[NSMutableArray alloc] init];
-        
+        [self offsetCamera];
     }
 
     return self;
+}
+
+-(void)offsetCamera
+{
+    float offset = 2.f;
+    vector_float3 axis = (vector_float3){0, 0, 1};
+    _camera = [[MeshCamera alloc] init];
+    [_camera moveAlong:axis by:offset];
+    
+    _shadowCamera = [[MeshCamera alloc] init];
+    [_shadowCamera moveAlong:axis by:offset];
 }
 
 - (void)addGeo:(Geo*)node
@@ -154,7 +160,7 @@
                                                 0.01f,
                                                 50.0f);
     
-    _shadowProjection = matrix_orthogonal_right_hand(size.width / (float)size.height, 0.01f, 50.0f);
+    _shadowProjection = _projection;// matrix_orthogonal_right_hand(size.width / (float)size.height, 0.01f, 50.0f);
                   
 }
 
@@ -174,7 +180,7 @@
 
         [depthEncoder setRenderPipelineState:_pipelineDepthState];
         [depthEncoder setDepthStencilState:_depthState];
-        [depthEncoder setVertexBuffer:_shadowUniforms offset:0 atIndex:IndexUniforms];
+        [depthEncoder setVertexBuffer:_shadowUniforms offset:0 atIndex:IndexShadowsUniforms];
 
         for (Geo* geometry in _nodes)
         {
@@ -209,8 +215,8 @@
         [renderEncoder setRenderPipelineState:_pipelineMainState];
         [renderEncoder setDepthStencilState:_depthState];
         [renderEncoder setFragmentTexture:_depthTex atIndex:FII_IndexDepthTexture];
-        [renderEncoder setVertexBuffer:_uniforms offset:0 atIndex:IndexUniforms];
-        [renderEncoder setVertexBuffer:_shadowUniforms offset:0 atIndex:IndexShadows];
+        [renderEncoder setVertexBuffer:_uniforms offset:0 atIndex:IndexModelUniforms];
+        [renderEncoder setVertexBuffer:_shadowUniforms offset:0 atIndex:IndexShadowsUniforms];
 
         for (Geo* geometry in _nodes)
         {
@@ -243,15 +249,17 @@
 
 - (void) updateUniforms
 {
-    Uniforms* data = [_uniforms contents];
+    ModelUniforms* data = [_uniforms contents];
     data->view = _camera.transform;
     data->projection = _projection;
-    data->light_ray = (vector_float4) {0, 0, -1, 0};
     
-    Uniforms* shadow = [_shadowUniforms contents];
+    vector_float3 clook = [_shadowCamera getLookDirection];
+    vector_float3 cpos  = [_shadowCamera getEyePosition];
+    ShadowUniforms* shadow = [_shadowUniforms contents];
     shadow->view = _shadowCamera.transform;
     shadow->projection = _shadowProjection;
-    shadow->light_ray = (vector_float4) {0, 0, -1, 0};
+    shadow->light_ray = (vector_float4){ clook.x, clook.y, clook.z, 0.f };
+    shadow->light_origin = (vector_float4){ cpos.x, cpos.y, cpos.z, 1.f };
 }
 
 

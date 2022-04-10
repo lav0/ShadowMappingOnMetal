@@ -23,15 +23,15 @@ PositionOut;
 
 typedef struct
 {
+    float4 color [[color(1)]];
     float depth [[depth(less)]];
 }
 DepthFragmentOut;
 
-
 vertex PositionOut
 vertexShader(constant Vertex *vertices                  [[ buffer(IndexVertices) ]],
-             constant Uniforms *transforms              [[ buffer(IndexUniforms) ]],
-             constant Uniforms *shadows                 [[ buffer(IndexShadows)  ]],
+             constant ModelUniforms *transforms         [[ buffer(IndexModelUniforms) ]],
+             constant ShadowUniforms *shadows           [[ buffer(IndexShadowsUniforms)  ]],
              const device float4x4& modelMat            [[ buffer(IndexModelMat) ]],
              uint vid                                   [[ vertex_id ]])
 {
@@ -40,7 +40,7 @@ vertexShader(constant Vertex *vertices                  [[ buffer(IndexVertices)
     out.positionW = projViewMat * modelMat * vertices[vid].position;
     out.positionM = shadows->projection * shadows->view * modelMat * vertices[vid].position;
     out.normal = modelMat * vertices[vid].normal;
-    out.light = transforms->light_ray;
+    out.light  = float4((modelMat * vertices[vid].position).xyz - shadows->light_origin.xyz, 0.f);
     out.color = vertices[vid].color;
     
     return out;
@@ -61,24 +61,24 @@ fragment float4 fragmentTextureShader(PositionOut in [[ stage_in ]],
     
     float d   = depths.sample(sampler2D, uv);
 
-    float4 ambient = 0.5 * in.color;
-    float4 diffuse = 0.7 * in.color;
+    float4 ambient = 0.4 * in.color;
+    float4 diffuse = 0.6 * in.color;
 
     float3 N = normalize(in.normal.xyz);
     float3 L = -normalize(in.light.xyz);
 
     float t = (in.positionM.z / in.positionM.w);
-    float diffuseFactor = d < t-0.00001 ? 0 : fmax(0.f, dot(N, L));
+    float diffuseFactor = d < t-1e-5 ? 0 : fmax(0.f, dot(N, L));
     
     return ambient + diffuseFactor * diffuse;
 }
 
-
+//
 
 vertex PositionOut vertexDepth(constant Vertex *vertices                  [[ buffer(IndexVertices) ]],
-                              constant Uniforms *transforms              [[ buffer(IndexUniforms) ]],
-                              const device float4x4& modelMat            [[ buffer(IndexModelMat) ]],
-                              uint vid                                   [[ vertex_id ]])
+                               constant ShadowUniforms *transforms        [[ buffer(IndexShadowsUniforms) ]],
+                               const device float4x4& modelMat            [[ buffer(IndexModelMat) ]],
+                               uint vid                                   [[ vertex_id ]])
 {
     PositionOut out;
     matrix_float4x4 projViewMat = transforms->projection * transforms->view;
@@ -88,7 +88,9 @@ vertex PositionOut vertexDepth(constant Vertex *vertices                  [[ buf
     return out;
 }
 
-fragment float fragmentDepthShader(PositionOut in [[ stage_in ]])
+fragment DepthFragmentOut fragmentDepthShader(PositionOut in [[ stage_in ]])
 {
-    return in.positionM.z;
+    DepthFragmentOut out;
+    out.depth = in.positionM.z / in.positionM.w;
+    return out;
 }

@@ -13,6 +13,7 @@
 
 +(Geo*) makeColoredTriangleAt:(vector_float4)position;
 +(Geo*) makeRectangleAt:(vector_float4)position color:(vector_float4)color;
++(Geo*) makeCubeAt:(vector_float4)position color:(vector_float4)color;
 
 @end
 

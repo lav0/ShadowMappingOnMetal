@@ -20,6 +20,9 @@ NS_ASSUME_NONNULL_BEGIN
 
 -(void)scaleBy:(float)factor;
 
+
++(matrix_float4x4) matrix4x4_rotation:(float)radians around:(vector_float3)axis;
+
 @end
 
 NS_ASSUME_NONNULL_END

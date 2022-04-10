@@ -15,8 +15,8 @@ typedef enum
 {
     IndexVertices     = 0,
     IndexViewportSize = 1,
-    IndexUniforms     = 2,
-    IndexShadows      = 3,
+    IndexModelUniforms     = 2,
+    IndexShadowsUniforms      = 3,
     IndexModelMat     = 4
 } VertexInputIndex;
 
@@ -30,8 +30,15 @@ typedef struct
 {
     matrix_float4x4 projection;
     matrix_float4x4 view;
-    vector_float4 light_ray;
-} Uniforms;
+} ModelUniforms;
+
+typedef struct
+{
+    matrix_float4x4 projection;
+    matrix_float4x4 view;
+    vector_float4   light_ray;
+    vector_float4   light_origin;
+} ShadowUniforms;
 
 typedef struct
 {

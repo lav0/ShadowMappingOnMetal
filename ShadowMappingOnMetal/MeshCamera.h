@@ -15,5 +15,7 @@
 -(void)revolveAround:(vector_float3)axis by:(float)angle;
 -(void)moveAlong:(vector_float3)axis by:(float)units;
 -(void)moveAlongLookBy:(float)units;
+-(vector_float3)getLookDirection;
+-(vector_float3)getEyePosition;
 
 @end
