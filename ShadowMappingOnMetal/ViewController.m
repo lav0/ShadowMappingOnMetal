@@ -10,8 +10,8 @@
 #import "GeoFactory.h"
 
 
-static float _CAM_ANGLE_INCREMENT = 0.03f;
-static float _RAD_OFFSET = 1.0f;
+static float _CAM_ANGLE_INCREMENT = M_PI_2 / 2;
+static float _RAD_OFFSET = 0.2f;
 
 @implementation ViewController
 {
@@ -22,7 +22,6 @@ static float _RAD_OFFSET = 1.0f;
     
     BOOL _revolving;
     float _triagAngle;
-    float _cameraAngle;
     
     NSTimer* _timer;
 }
@@ -38,7 +37,8 @@ static float _RAD_OFFSET = 1.0f;
     
     NSAssert(view.device, @"Metal is not supported on this device");
     
-    _renderer = [[Renderer alloc] initWithMetalKitView:view];
+    uint numShadows = 2;
+    _renderer = [[Renderer alloc] initWithMetalKitView:view andNumCameras:numShadows];
     
     NSAssert(_renderer, @"Renderer failed initialization");
     
@@ -46,7 +46,7 @@ static float _RAD_OFFSET = 1.0f;
     const vector_float4 blueish = (vector_float4){ 0.5, 0.53, 0.7, 1 };
     
     _geo = [GeoFactory makeColoredTriangleAt:(vector_float4){0, 0, -0.9, 1}];
-    _ge1 = [GeoFactory makeCubeAt:(vector_float4){0, 0, -2, 1} color:grey];
+    _ge1 = [GeoFactory makeCubeAt:(vector_float4){-0.5, -0.5, -2, 1} color:blueish];
     _ge2 = [GeoFactory makeRectangleAt:(vector_float4){-10, -10, -10, 1} color:grey];
     
     [_ge2 scaleBy:20.0];
@@ -61,18 +61,20 @@ static float _RAD_OFFSET = 1.0f;
     
     _revolving = NO;
     _triagAngle = 3.82719493; // M_PI / 3;
-    _cameraAngle = 0.f;
+    
     _timer = [NSTimer scheduledTimerWithTimeInterval: 0.02
                                               target: self
                                               selector:@selector(onTick:)
                                               userInfo: nil repeats:YES];
     
-//    float cam_x = _RAD_OFFSET * sin(_cameraAngle);
-//    float cam_y = _RAD_OFFSET * cos(_cameraAngle);
-//    [_renderer.shadowCamera moveAlong:(vector_float3){cam_x, -cam_y, 0} by: 1.0f];
+    float cameraAngle = 0.f;
+    float cam_x = _RAD_OFFSET * sin(cameraAngle);
+    float cam_y = _RAD_OFFSET * cos(cameraAngle);
+    [_renderer.shadowCamera[0] moveAlong:(vector_float3){cam_x, -cam_y, 0} by: 1.f];
+    [_renderer.shadowCamera[0] moveAlong:(vector_float3){-cam_y, cam_x, 0.f} by:_RAD_OFFSET];
     
-    matrix_float4x4 rot_mat = [Geo matrix4x4_rotation:M_PI_2*0.95 around:(vector_float3){0, 1, 0}];
-    _ge1.transform = simd_mul(_ge1.transform, rot_mat);
+    [_renderer.shadowCamera[1] moveAlong:(vector_float3){cam_x, cam_y, 0} by: 1.f];
+    [_renderer.shadowCamera[1] moveAlong:(vector_float3){cam_y, cam_x, 0.f} by:_RAD_OFFSET];
 }
 
 
@@ -89,13 +91,6 @@ static float _RAD_OFFSET = 1.0f;
         matrix_float4x4 rot_mat = [Geo matrix4x4_rotation:0.01 around:(vector_float3){0, 1, 0}];
         _ge1.transform = simd_mul(_ge1.transform, rot_mat);
     }
-    
-    _cameraAngle += _CAM_ANGLE_INCREMENT;
-    
-//    float cam_x = _RAD_OFFSET * sin(_cameraAngle);
-//    float cam_y = _RAD_OFFSET * cos(_cameraAngle);
-//
-//    [_renderer.shadowCamera moveAlong:(vector_float3){-cam_y, cam_x, 0.f} by:_RAD_OFFSET*_CAM_ANGLE_INCREMENT];
 }
 -(void)leftPressed {
     [_renderer.camera revolveAround:(vector_float3){0, 1, 0} by:0.05];

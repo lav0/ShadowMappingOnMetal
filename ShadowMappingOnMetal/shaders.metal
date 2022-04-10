@@ -9,15 +9,19 @@ using namespace metal;
 
 #include "ShaderTypes.h"
 
+#define MaxLightCount 4
 
 typedef struct
 {
     float4 positionW [[position]];
     float4 positionM;
     float4 normal;
-    float4 light;
     float4 color;
-    float2 texCoords;
+    float4 light0;
+    float4 light1;
+    float4 light2;
+    float4 light3;
+    uint   lights_count;
 }
 PositionOut;
 
@@ -33,6 +37,7 @@ vertexShader(constant Vertex *vertices                  [[ buffer(IndexVertices)
              constant ModelUniforms *transforms         [[ buffer(IndexModelUniforms) ]],
              constant ShadowUniforms *shadows           [[ buffer(IndexShadowsUniforms)  ]],
              const device float4x4& modelMat            [[ buffer(IndexModelMat) ]],
+             const device uint& light_count             [[ buffer(IndexLightCount) ]],
              uint vid                                   [[ vertex_id ]])
 {
     PositionOut out;
@@ -40,14 +45,26 @@ vertexShader(constant Vertex *vertices                  [[ buffer(IndexVertices)
     out.positionW = projViewMat * modelMat * vertices[vid].position;
     out.positionM = shadows->projection * shadows->view * modelMat * vertices[vid].position;
     out.normal = modelMat * vertices[vid].normal;
-    out.light  = float4((modelMat * vertices[vid].position).xyz - shadows->light_origin.xyz, 0.f);
     out.color = vertices[vid].color;
+    
+    float4x4 lights;
+    for (uint idx=0; idx<light_count; ++idx) {
+        lights.columns[idx]  = float4((modelMat * vertices[vid].position).xyz - shadows[idx].light_origin.xyz, 0.f);
+    }
+    
+    out.light0 = lights.columns[0];
+    out.light1 = lights.columns[1];
+    out.light2 = lights.columns[2];
+    out.light3 = lights.columns[3];
+    out.lights_count = light_count;
     
     return out;
 }
 
 fragment float4 fragmentTextureShader(PositionOut in [[ stage_in ]],
-                                      depth2d<float, access::sample> depths [[ texture(FII_IndexDepthTexture) ]])
+                                      depth2d<float, access::sample> depths [[ texture(FII_IndexDepthTexture) ]],
+                                      depth2d<float, access::sample> depths2 [[ texture(FII_IndexDepthTexture2) ]]
+                                      )
 {
     constexpr sampler sampler2D(coord::normalized,
                                 address::clamp_to_edge,
@@ -58,19 +75,29 @@ fragment float4 fragmentTextureShader(PositionOut in [[ stage_in ]],
     uv.y *= -1;
     uv.xy += 1.0;
     uv.xy /= 2.0;
+
+    float4 ambient = 0.5 * in.color;
+    float4 diffuse = 0.25 * in.color;
+
+    float4 final_color = ambient;
     
-    float d   = depths.sample(sampler2D, uv);
-
-    float4 ambient = 0.4 * in.color;
-    float4 diffuse = 0.6 * in.color;
-
-    float3 N = normalize(in.normal.xyz);
-    float3 L = -normalize(in.light.xyz);
-
-    float t = (in.positionM.z / in.positionM.w);
-    float diffuseFactor = d < t-1e-5 ? 0 : fmax(0.f, dot(N, L));
+    float4x4 lights = { in.light0, in.light1, in.light2, in.light3 };
     
-    return ambient + diffuseFactor * diffuse;
+    for (uint i=0; i<in.lights_count; ++i)
+    {
+        float d   = (i==0) ? depths.sample(sampler2D, uv) :
+                             depths2.sample(sampler2D, uv);
+
+        float3 N = normalize(in.normal.xyz);
+        float3 L = -normalize(lights.columns[i].xyz);
+
+        float t = (in.positionM.z / in.positionM.w);
+        float diffuseFactor = d < t-1e-5 ? 0 : fmax(0.f, dot(N, L));
+        
+        final_color += diffuseFactor * diffuse;
+    }
+    
+    return final_color;
 }
 
 //

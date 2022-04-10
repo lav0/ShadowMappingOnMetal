@@ -17,9 +17,9 @@ NS_ASSUME_NONNULL_BEGIN
 @interface Renderer : NSObject<MTKViewDelegate>
 
 @property (strong, nonatomic) MeshCamera* camera;
-@property (strong, nonatomic) MeshCamera* shadowCamera;
+@property (strong, nonatomic) NSArray<MeshCamera*>* shadowCamera;
 
-- (nonnull instancetype)initWithMetalKitView:(nonnull MTKView *)mtkView;
+- (nonnull instancetype)initWithMetalKitView:(nonnull MTKView *)mtkView andNumCameras:(uint)numCameras;
 - (void)addGeo:(Geo*)node;
 
 @end

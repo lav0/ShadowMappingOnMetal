@@ -19,7 +19,7 @@
     
     id<MTLBuffer> _uniforms;
     id<MTLBuffer> _shadowUniforms;
-    id<MTLTexture> _depthTex;
+    NSMutableArray< id<MTLTexture> > *_depthTex;
     id<MTLTexture> _colorTex;
     
     id<MTLRenderPipelineState> _pipelineMainState;
@@ -27,17 +27,18 @@
     id<MTLDepthStencilState> _depthState;
     id<MTLCommandQueue> _commandQueue;
     
-    MTLRenderPassDescriptor* _shadowPassDescriptor;
+    NSMutableArray< MTLRenderPassDescriptor* >* _shadowPassDescriptor;
 
     vector_uint2 _viewportSize;
     
     matrix_float4x4 _projection;
     matrix_float4x4 _shadowProjection;
+    uint            _numShadowCameras;
     
     NSMutableArray< Geo* >* _nodes;
 }
 
-- (nonnull instancetype)initWithMetalKitView:(nonnull MTKView *)mtkView
+- (nonnull instancetype)initWithMetalKitView:(nonnull MTKView *)mtkView andNumCameras:(uint)numCameras
 {
     self = [super init];
     if(self)
@@ -92,7 +93,9 @@
         depthTextureDesc.storageMode = MTLStorageModePrivate;
         depthTextureDesc.usage = MTLTextureUsageShaderRead & MTLTextureUsageRenderTarget;
         
-        _depthTex = [_device newTextureWithDescriptor:depthTextureDesc];
+        _depthTex = [[NSMutableArray alloc] init];
+        for (int i=0; i<numCameras; ++i)
+            [_depthTex addObject: [_device newTextureWithDescriptor:depthTextureDesc]];
         
         MTLTextureDescriptor* colorTextureDesc = [MTLTextureDescriptor texture2DDescriptorWithPixelFormat:mtkView.colorPixelFormat
                                                                                                     width:256 //mtkView.frame.size.width
@@ -105,14 +108,21 @@
         
         _colorTex = [_device newTextureWithDescriptor:colorTextureDesc];
         
-        _shadowPassDescriptor = [[MTLRenderPassDescriptor alloc] init];
-        _shadowPassDescriptor.depthAttachment.texture = _depthTex;
-        _shadowPassDescriptor.depthAttachment.loadAction = MTLLoadActionClear;
-        _shadowPassDescriptor.depthAttachment.storeAction = MTLStoreActionStore;
-        _shadowPassDescriptor.depthAttachment.clearDepth = 1.0;
-
-        _uniforms = [_device newBufferWithLength:sizeof(ModelUniforms) options:MTLResourceStorageModeShared];
-        _shadowUniforms = [_device newBufferWithLength:sizeof(ShadowUniforms) options:MTLResourceStorageModeShared];
+        _shadowPassDescriptor = [[NSMutableArray alloc] init];
+        for (int i=0; i<numCameras; ++i) {
+            MTLRenderPassDescriptor* shadowPassDescriptor = [[MTLRenderPassDescriptor alloc] init];
+            shadowPassDescriptor.depthAttachment.texture = _depthTex[i];
+            shadowPassDescriptor.depthAttachment.loadAction = MTLLoadActionClear;
+            shadowPassDescriptor.depthAttachment.storeAction = MTLStoreActionStore;
+            shadowPassDescriptor.depthAttachment.clearDepth = 1.0;
+            [_shadowPassDescriptor addObject:shadowPassDescriptor];
+        }
+        
+        _uniforms = [_device newBufferWithLength:sizeof(ModelUniforms)
+                                         options:MTLResourceStorageModeShared];
+        
+        _shadowUniforms = [_device newBufferWithLength:sizeof(ShadowUniforms)*numCameras
+                                               options:MTLResourceStorageModeShared];
                 
         // Pipeline State creation could fail if the pipeline descriptor isn't set up properly.
         //  If the Metal API validation is enabled, you can find out more information about what
@@ -124,6 +134,8 @@
         _commandQueue = [_device newCommandQueue];
         
         _nodes = [[NSMutableArray alloc] init];
+        
+        _numShadowCameras = numCameras;
         [self offsetCamera];
     }
 
@@ -137,8 +149,13 @@
     _camera = [[MeshCamera alloc] init];
     [_camera moveAlong:axis by:offset];
     
-    _shadowCamera = [[MeshCamera alloc] init];
-    [_shadowCamera moveAlong:axis by:offset];
+    MeshCamera* shadCam = [[MeshCamera alloc] init];
+    [shadCam moveAlong:axis by:offset];
+    
+    MeshCamera* shadSecCam = [[MeshCamera alloc] init];
+    [shadSecCam moveAlong:axis by:offset];
+    
+    _shadowCamera = [[NSArray alloc] initWithObjects:shadCam, shadSecCam, nil];
 }
 
 - (void)addGeo:(Geo*)node
@@ -172,32 +189,35 @@
     id<MTLCommandBuffer> commandBuffer = [_commandQueue commandBuffer];
     commandBuffer.label = @"MyCommand";
 
-    if (_shadowPassDescriptor != nil)
+    for (uint i=0; i<_numShadowCameras; ++i)
     {
-        id<MTLRenderCommandEncoder> depthEncoder =
-        [commandBuffer renderCommandEncoderWithDescriptor:_shadowPassDescriptor];
-        depthEncoder.label = @"DepthPassEncoder";
-
-        [depthEncoder setRenderPipelineState:_pipelineDepthState];
-        [depthEncoder setDepthStencilState:_depthState];
-        [depthEncoder setVertexBuffer:_shadowUniforms offset:0 atIndex:IndexShadowsUniforms];
-
-        for (Geo* geometry in _nodes)
+        MTLRenderPassDescriptor* shadowPassDescriptor = _shadowPassDescriptor[i];
+        if (shadowPassDescriptor != nil)
         {
-            matrix_float4x4 model = geometry.transform;
+            id<MTLRenderCommandEncoder> depthEncoder =
+            [commandBuffer renderCommandEncoderWithDescriptor:shadowPassDescriptor];
+            depthEncoder.label = @"DepthPassEncoder";
 
-            [depthEncoder setVertexBytes:&model length:sizeof(matrix_float4x4) atIndex:IndexModelMat];
+            [depthEncoder setRenderPipelineState:_pipelineDepthState];
+            [depthEncoder setDepthStencilState:_depthState];
+            [depthEncoder setVertexBuffer:_shadowUniforms offset:i * sizeof(ShadowUniforms) atIndex:IndexShadowsUniforms];
 
-            [depthEncoder setVertexBytes:[geometry data]
-                                   length:sizeof(Vertex) * geometry.size
-                                  atIndex:IndexVertices];
+            for (Geo* geometry in _nodes)
+            {
+                matrix_float4x4 model = geometry.transform;
 
-            [depthEncoder drawPrimitives:MTLPrimitiveTypeTriangle
-                             vertexStart:0
-                             vertexCount:geometry.size];
+                [depthEncoder setVertexBytes:&model length:sizeof(matrix_float4x4) atIndex:IndexModelMat];
+
+                [depthEncoder setVertexBytes:[geometry data]
+                                       length:sizeof(Vertex) * geometry.size
+                                      atIndex:IndexVertices];
+
+                [depthEncoder drawPrimitives:MTLPrimitiveTypeTriangle
+                                 vertexStart:0
+                                 vertexCount:geometry.size];
+            }
+            [depthEncoder endEncoding];
         }
-        [depthEncoder endEncoding];
-
     }
     
     MTLRenderPassDescriptor *renderPassDescriptor = view.currentRenderPassDescriptor;
@@ -214,9 +234,11 @@
 
         [renderEncoder setRenderPipelineState:_pipelineMainState];
         [renderEncoder setDepthStencilState:_depthState];
-        [renderEncoder setFragmentTexture:_depthTex atIndex:FII_IndexDepthTexture];
+        [renderEncoder setFragmentTexture:_depthTex[0] atIndex:FII_IndexDepthTexture];
+        [renderEncoder setFragmentTexture:_depthTex[1] atIndex:FII_IndexDepthTexture2];
         [renderEncoder setVertexBuffer:_uniforms offset:0 atIndex:IndexModelUniforms];
         [renderEncoder setVertexBuffer:_shadowUniforms offset:0 atIndex:IndexShadowsUniforms];
+        [renderEncoder setVertexBytes:&_numShadowCameras length:sizeof(_numShadowCameras) atIndex:IndexLightCount];
 
         for (Geo* geometry in _nodes)
         {
@@ -253,13 +275,18 @@
     data->view = _camera.transform;
     data->projection = _projection;
     
-    vector_float3 clook = [_shadowCamera getLookDirection];
-    vector_float3 cpos  = [_shadowCamera getEyePosition];
-    ShadowUniforms* shadow = [_shadowUniforms contents];
-    shadow->view = _shadowCamera.transform;
-    shadow->projection = _shadowProjection;
-    shadow->light_ray = (vector_float4){ clook.x, clook.y, clook.z, 0.f };
-    shadow->light_origin = (vector_float4){ cpos.x, cpos.y, cpos.z, 1.f };
+    for (uint i=0; i<_numShadowCameras; ++i)
+    {
+        MeshCamera* shadCam = _shadowCamera[i];
+        
+        vector_float3 clook = [shadCam getLookDirection];
+        vector_float3 cpos  = [shadCam getEyePosition];
+        ShadowUniforms* shadow = [_shadowUniforms contents] + i * sizeof(ShadowUniforms);
+        shadow->view = shadCam.transform;
+        shadow->projection = _shadowProjection;
+        shadow->light_ray = (vector_float4){ clook.x, clook.y, clook.z, 0.f };
+        shadow->light_origin = (vector_float4){ cpos.x, cpos.y, cpos.z, 1.f };
+    }
 }
 
 

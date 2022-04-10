@@ -13,17 +13,19 @@
 
 typedef enum
 {
-    IndexVertices     = 0,
-    IndexViewportSize = 1,
-    IndexModelUniforms     = 2,
-    IndexShadowsUniforms      = 3,
-    IndexModelMat     = 4
+    IndexVertices        = 0,
+    IndexViewportSize    = 1,
+    IndexModelUniforms   = 2,
+    IndexShadowsUniforms = 3,
+    IndexModelMat        = 4,
+    IndexLightCount      = 5,
 } VertexInputIndex;
 
 typedef enum
 {
     FII_IndexDepthTexture = 0,
-    FII_IndexColorTexture = 1
+    FII_IndexColorTexture = 1,
+    FII_IndexDepthTexture2 = 2,
 } FragmentInputIndex;
 
 typedef struct
