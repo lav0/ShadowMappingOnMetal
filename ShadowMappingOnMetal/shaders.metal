@@ -71,7 +71,9 @@ fragment float4 fragmentTextureShader(PositionOut in [[ stage_in ]],
                                 min_filter::linear,
                                 mag_filter::linear);
     
-    float2 uv = in.positionM.xy / in.positionM.w;
+    float3 model_world = in.positionM.xyz / in.positionM.w;
+    
+    float2 uv = model_world.xy;
     uv.y *= -1;
     uv.xy += 1.0;
     uv.xy /= 2.0;
@@ -89,10 +91,10 @@ fragment float4 fragmentTextureShader(PositionOut in [[ stage_in ]],
                              depths2.sample(sampler2D, uv);
 
         float3 N = normalize(in.normal.xyz);
-        float3 L = -normalize(lights.columns[i].xyz);
+        float3 L = -normalize(in.light1.xyz);
 
-        float t = (in.positionM.z / in.positionM.w);
-        float diffuseFactor = d < t-1e-5 ? 0 : fmax(0.f, dot(N, L));
+        float t = model_world.z;
+        float diffuseFactor = d < t-1e-4 ? 0 : fmax(0.f, dot(N, L));
         
         final_color += diffuseFactor * diffuse;
     }
